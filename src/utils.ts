@@ -73,17 +73,18 @@ export const ensureHttpsAndNoTrailingSlash = (url: string): string => {
 }
 
 export const generatePrompts = (query: TextTranslateQuery): {
-  generatedSystemPrompt: string,
-  generatedUserPrompt: string
+  generatedSystemPrompt: string;
+  generatedUserPrompt: string;
 } => {
-  let generatedSystemPrompt = null;
+  // 1. Generate default prompts using placeholders
+  let defaultSystemPrompt: string = SYSTEM_PROMPT;
   const { detectFrom, detectTo } = query;
   const sourceLang = langMap.get(detectFrom) || detectFrom;
   const targetLang = langMap.get(detectTo) || detectTo;
-  let generatedUserPrompt = `translate from ${sourceLang} to ${targetLang}`;
+  let defaultUserPrompt = `translate from ${sourceLang} to ${targetLang}:\n\n$text`;
 
   if (detectTo === "wyw" || detectTo === "yue") {
-    generatedUserPrompt = `翻译成${targetLang}`;
+    defaultUserPrompt = `翻译成${targetLang}:\n\n$text`;
   }
 
   if (
@@ -92,30 +93,41 @@ export const generatePrompts = (query: TextTranslateQuery): {
     detectFrom === "zh-Hant"
   ) {
     if (detectTo === "zh-Hant") {
-      generatedUserPrompt = "翻译成繁体白话文";
+      defaultUserPrompt = "翻译成繁体白话文:\n\n$text";
     } else if (detectTo === "zh-Hans") {
-      generatedUserPrompt = "翻译成简体白话文";
+      defaultUserPrompt = "翻译成简体白话文:\n\n$text";
     } else if (detectTo === "yue") {
-      generatedUserPrompt = "翻译成粤语白话文";
+      defaultUserPrompt = "翻译成粤语白话文:\n\n$text";
     }
   }
+
   if (detectFrom === detectTo) {
-    generatedSystemPrompt =
+    defaultSystemPrompt =
       "You are a text embellisher, you can only embellish the text, don't interpret it.";
     if (detectTo === "zh-Hant" || detectTo === "zh-Hans") {
-      generatedUserPrompt = "润色此句";
+      defaultUserPrompt = "润色此句:\n\n$text";
     } else {
-      generatedUserPrompt = "polish this sentence";
+      defaultUserPrompt = "polish this sentence:\n\n$text";
     }
   }
 
-  generatedUserPrompt = `${generatedUserPrompt}:\n\n${query.text}`
+  // 2. Decide which prompts to use based on custom settings
+  const finalSystemPrompt =
+    $option.customSystemPrompt !== undefined
+      ? $option.customSystemPrompt
+      : defaultSystemPrompt;
 
+  const finalUserPrompt =
+    $option.customUserPrompt && $option.customUserPrompt.trim() !== ""
+      ? $option.customUserPrompt
+      : defaultUserPrompt;
+
+  // 3. Replace keywords in the final prompts
   return {
-    generatedSystemPrompt: generatedSystemPrompt ?? SYSTEM_PROMPT,
-    generatedUserPrompt
+    generatedSystemPrompt: replacePromptKeywords(finalSystemPrompt, query),
+    generatedUserPrompt: replacePromptKeywords(finalUserPrompt, query),
   };
-}
+};
 
 export const getApiKey = (apiKeys: string): string => {
   const trimmedApiKeys = apiKeys.endsWith(",")

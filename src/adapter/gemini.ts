@@ -44,24 +44,41 @@ export class GeminiAdapter extends BaseAdapter {
   public buildRequestBody(query: TextTranslateQuery): Record<string, unknown> {
     const { generatedSystemPrompt, generatedUserPrompt } = generatePrompts(query);
 
-    return {
-      system_instruction: {
-        parts: {
-          text: generatedSystemPrompt
-        }
-      },
+    const generationConfig: Record<string, unknown> = {
+      temperature: this.getTemperature(),
+      topK: 40,
+      topP: 0.95,
+      maxOutputTokens: 8192,
+    };
+
+    const thinkingBudget = $option.thinkingBudget || "not_set";
+    if (thinkingBudget !== "not_set") {
+      generationConfig.thinkingConfig = {
+        thinkingBudget:
+          thinkingBudget === "custom"
+            ? parseInt($option.customThinkingBudget || "1024", 10)
+            : parseInt(thinkingBudget, 10),
+      };
+    }
+
+    const body: Record<string, unknown> = {
       contents: {
         parts: {
-          text: generatedUserPrompt
-        }
+          text: generatedUserPrompt,
+        },
       },
-      generationConfig: {
-        temperature: this.getTemperature(),
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 8192,
-      }
+      generationConfig,
     };
+
+    if (generatedSystemPrompt) {
+      body.system_instruction = {
+        parts: {
+          text: generatedSystemPrompt,
+        },
+      };
+    }
+
+    return body;
   }
 
   public getTextGenerationUrl(_apiUrl: string): string {

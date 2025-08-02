@@ -176,3 +176,17 @@ export interface TypeCheckConfig {
   }
 }
 
+export interface BobOptions {
+  serviceProvider: ServiceProvider;
+  apiUrl: string;
+  apiKeys: string;
+  model: string;
+  customModel?: string;
+  customSystemPrompt?: string;
+  customUserPrompt?: string;
+  stream: 'enable' | 'disable';
+  temperature: string;
+  thinkingBudget: 'not_set' | '-1' | '0' | 'custom';
+  customThinkingBudget?: string;
+}
+

@@ -164,6 +164,40 @@
       },
       "title": "温度",
       "type": "text"
+    },
+    {
+      "defaultValue": "not_set",
+      "identifier": "thinkingBudget",
+      "menuValues": [
+        {
+          "title": "不设置",
+          "value": "not_set"
+        },
+        {
+          "title": "动态",
+          "value": "-1"
+        },
+        {
+          "title": "禁用",
+          "value": "0"
+        },
+        {
+          "title": "自定义",
+          "value": "custom"
+        }
+      ],
+      "title": "Thinking Budget",
+      "type": "menu"
+    },
+    {
+      "desc": "当 Thinking Budget 选择自定义时，此项为必填项",
+      "identifier": "customThinkingBudget",
+      "textConfig": {
+        "placeholderText": "1024",
+        "type": "visible"
+      },
+      "title": "自定义 Thinking Budget",
+      "type": "text"
     }
   ],
   "summary": "AI powered translator",

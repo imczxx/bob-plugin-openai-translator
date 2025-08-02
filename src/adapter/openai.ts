@@ -1,6 +1,6 @@
 import { HttpResponse, ServiceError, TextTranslateQuery, ValidationCompletion } from "@bob-translate/types";
 import type { OpenAiChatCompletion, GeminiResponse, OpenAiModelList, ServiceAdapterConfig, OpenAiErrorDetail, OpenAiErrorResponse } from "../types";
-import { generatePrompts, handleValidateError, isServiceError, replacePromptKeywords, createTypeGuard } from "../utils";
+import { generatePrompts, handleValidateError, isServiceError, createTypeGuard } from "../utils";
 import { BaseAdapter } from "./base";
 
 const hasOpenAiErrorShape = createTypeGuard<OpenAiErrorResponse>({
@@ -53,11 +53,19 @@ export class OpenAiAdapter extends BaseAdapter {
   }
 
   public buildRequestBody(query: TextTranslateQuery): Record<string, unknown> {
-    const { customSystemPrompt, customUserPrompt } = $option;
     const { generatedSystemPrompt, generatedUserPrompt } = generatePrompts(query);
 
-    const systemPrompt = replacePromptKeywords(customSystemPrompt, query) || generatedSystemPrompt;
-    const userPrompt = replacePromptKeywords(customUserPrompt, query) || generatedUserPrompt;
+    const messages = [];
+    if (generatedSystemPrompt) {
+      messages.push({
+        role: "system",
+        content: generatedSystemPrompt,
+      });
+    }
+    messages.push({
+      role: "user",
+      content: generatedUserPrompt,
+    });
 
     return {
       model: this.getModel(),
@@ -67,16 +75,7 @@ export class OpenAiAdapter extends BaseAdapter {
       frequency_penalty: 1,
       presence_penalty: 1,
       stream: this.isStreamEnabled(),
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        {
-          role: "user",
-          content: userPrompt,
-        },
-      ],
+      messages,
     };
   }
 
